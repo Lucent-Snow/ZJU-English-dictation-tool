@@ -29,17 +29,13 @@ class GameEngine:
         self.current_deck: List[WordEntry] = []   # 当前正在学习的牌组
         self.current_index: int = 0               # 当前牌组的索引
 
-        # --- *** 修改此部分 *** ---
-        # 移除 self.game_mode，替换为更精细的设置
-        self.question_mode: str = "word"      # 'word' 或 'example'
-        self.show_first_letter: bool = False  # True 或 False
-        self.retry_on_wrong: bool = False     # True 或 False
-        # --- *** 修改结束 *** ---
+        self.question_mode: str = "word"
+        self.show_first_letter: bool = False
+        self.retry_on_wrong: bool = False
 
         # 错题本状态
-        # 我们使用 Set (集合) 来自动处理重复的单词
         self.wrong_words: Set[WordEntry] = set()
-        
+
         # 在启动时，从硬盘加载上次的错题
         self._load_wrong_words_from_disk()
 
@@ -103,9 +99,7 @@ class GameEngine:
         """
         self.all_words = self.loader.load_word_list(book, units)
 
-        # --- *** 这是关键修改 *** ---
-
-        # 1. 应用内容过滤器 (来自 "单词/短语" 设置)
+        # 应用内容过滤器
         if filter_mode == "words_only":
             temp_deck = [w for w in self.all_words if ' ' not in w.english]
         elif filter_mode == "phrases_only":
@@ -115,19 +109,15 @@ class GameEngine:
 
         self.current_deck = temp_deck
 
-        # 2. 应用顺序模式 (来自 "随机/顺序" 设置)
+        # 应用顺序模式
         if order_mode == "random":
             random.shuffle(self.current_deck)
 
-        # 3. 存储其他模式设置
+        # 存储其他模式设置
         self.question_mode = question_mode
         self.show_first_letter = show_first_letter
         self.retry_on_wrong = retry_on_wrong
         self.current_index = 0
-
-        # --- *** 修改结束 *** ---
-
-        print(f"Game started. {len(self.current_deck)} words loaded.")
 
     def start_review_mode(self) -> bool:
         """
@@ -227,11 +217,8 @@ class GameEngine:
 
         return current_word
 
-    # --- *** 新增方法 2 *** ---
     def clear_wrong_words_cache(self):
-        """
-        清空内存和硬盘上的所有错题。
-        """
+        """清空内存和硬盘上的所有错题。"""
         self.wrong_words = set()
         self._save_wrong_words_to_disk()
         print("Wrong words cache cleared.")

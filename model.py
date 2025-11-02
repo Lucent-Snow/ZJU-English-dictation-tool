@@ -4,23 +4,16 @@ import re
 from dataclasses import dataclass
 from typing import List
 
-# --- 添加这个辅助函数 ---
 def _sanitize_string(text: str) -> str:
-    """
-    清理字符串，移除标准空白符和常见的不可见字符。
-    """
+    """清理字符串，移除标准空白符和常见的不可见字符。"""
     if not text:
         return ""
     # 移除零宽空格 (Zero-width space)
     text = text.replace('\u200b', '')
     # 将非中断空格 (Non-breaking space) 替换为标准空格
     text = text.replace('\xa0', ' ')
-
-    # 你未来可以按需在这里添加更多需要移除的字符
-
     # 最后，移除首尾的标准空白符
     return text.strip()
-# -------------------------------
 
 @dataclass(frozen=True)
 class WordEntry:
@@ -86,15 +79,13 @@ class DataLoader:
                 with open(file_path, mode='r', encoding='utf-8-sig') as f:
                     # 使用 DictReader 自动读取表头 (english, chinese, examples)
                     reader = csv.DictReader(f)
-                    
+
                     for row in reader:
-                        # --- 在这里使用 _sanitize_string 函数 ---
                         entry = WordEntry(
                             english=_sanitize_string(row.get('english', '')),
                             chinese=_sanitize_string(row.get('chinese', '')),
                             examples=_sanitize_string(row.get('examples', '')) or ""
                         )
-                        # --- 修改结束 ---
 
                         # 确保我们只添加有英文单词的行
                         if entry.english:

@@ -27,63 +27,45 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # --- 1. 初始化引擎和加载器 ---
-        # (View 拥有 Engine 和 Loader)
+        # 初始化数据加载器和游戏引擎
         try:
             self.loader = DataLoader(data_directory="./data")
         except Exception as e:
             QMessageBox.critical(self, "错误", f"数据加载器初始化失败: {e}\n请确保 'data' 目录存在。")
             sys.exit(1)
-            
+
         self.engine = GameEngine(self.loader)
-
-        # --- *** 新增：加载自定义指令 *** ---
         self.keybindings = self.load_keybindings()
-
-        # 存储当前正在回答的单词
         self.current_word: Optional[WordEntry] = None
 
-        # --- 2. 设置主窗口 ---
+        # 设置主窗口
         self.setWindowTitle("大英默写器 (app版)")
-        self.setGeometry(100, 100, 1000, 700) # 窗口初始大小
+        self.setGeometry(100, 100, 1000, 700)
 
-        # --- 3. 初始化UI ---
-        self.init_main_ui()      # 初始化中央的 "滚动日志"
-        self.init_settings_dock()  # 初始化右侧的 "可折叠设置面板"
-        
-        # --- 4. 填充初始数据 ---
+        # 初始化UI
+        self.init_main_ui()
+        self.init_settings_dock()
         self.populate_books_combo()
         self.update_review_button_count()
 
-        # --- 5. 新增：创建顶部工具栏 ---
+        # 创建工具栏
         self.toolbar = self.addToolBar("Main Toolbar")
-        self.toolbar.setMovable(False) # 禁止工具栏移动
+        self.toolbar.setMovable(False)
 
-        # --- *** 新增代码：添加帮助按钮 *** ---
-        # (添加到 "弹簧" 之前，使其保留在左侧)
+        # 添加帮助按钮
         self.help_action = self.toolbar.addAction("帮助")
-        self.help_action.setCheckable(False)
         self.help_action.triggered.connect(self.show_help_dialog)
-        # --- *** 新增结束 *** ---
 
-        # --- (这是你已有的代码) ---
-        # 1. 创建一个间隔部件
+        # 添加右侧设置切换按钮
         spacer = QWidget()
-        # 2. 设置其尺寸策略为"在水平方向上尽可能扩展"
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        # 3. 将间隔部件添加到工具栏
         self.toolbar.addWidget(spacer)
-        # --- (已有代码结束) ---
 
-        # 4. 现在再添加动作，它会被推到最右边
         self.toggle_settings_action = self.toolbar.addAction("隐藏设置")
-        self.toggle_settings_action.setCheckable(False) # 这是一个触发按钮，不是开关
         self.toggle_settings_action.triggered.connect(self.toggle_settings_panel)
 
         # 禁用输入框，直到游戏开始
         self.input_line.setEnabled(False)
-
-        # 显示窗口
         self.show()
 
     def init_main_ui(self):
@@ -111,13 +93,9 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
-    # --- *** 新增：加载 keybindings.json 的函数 *** ---
     def load_keybindings(self) -> dict:
-        """
-        加载 keybindings.json。如果不存在则创建默认值。
-        """
+        """加载 keybindings.json。如果不存在则创建默认值。"""
         bindings_file = "keybindings.json"
-        # 默认值
         default_bindings = {
             "a": "action_skip_no_penalty",
             "/skip": "action_skip_no_penalty",
@@ -133,60 +111,44 @@ class MainWindow(QMainWindow):
                 return default_bindings
             except Exception as e:
                 print(f"无法创建默认 keybindings.json: {e}")
-                return {} # 出错时返回空
+                return {}
 
         try:
             with open(bindings_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             print(f"加载 keybindings.json 失败: {e}")
-            return default_bindings # 出错时加载默认值
+            return default_bindings
 
     def init_settings_dock(self):
         """设置可折叠的右侧停靠面板"""
-
-        # 1. 创建 QDockWidget
         self.settings_dock = QDockWidget("设置", self)
-
-        # --- *** 这是关键修改 *** ---
-        # 1. 移除所有特性 (移动, 关闭, 浮动)
-        self.settings_dock.setFeatures(
-            QDockWidget.DockWidgetFeature.NoDockWidgetFeatures
-        )
-        # 2. 移除标题栏 (因为特性被移除了，标题栏也没意义了)
+        self.settings_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         self.settings_dock.setTitleBarWidget(QWidget())
-
-        # 3. 设置一个固定的宽度，禁止用户拖拽
         self.settings_dock.setFixedWidth(300)
-        # --- *** 修改结束 *** ---
-
         self.settings_dock.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea)
-        
-        # 2. 创建容纳所有设置项的容器
+
         settings_widget = QWidget()
         self.settings_layout = QVBoxLayout(settings_widget)
 
-        # 3. 添加控件
-        # --- 书本选择 ---
+        # 书本选择
         self.settings_layout.addWidget(QLabel("1. 选择书本:"))
         self.book_combo = QComboBox()
         self.book_combo.currentTextChanged.connect(self.populate_units_checkboxes)
         self.settings_layout.addWidget(self.book_combo)
 
-        # --- 单元选择 (带滚动条) ---
+        # 单元选择
         self.settings_layout.addWidget(QLabel("2. 选择单元:"))
         self.unit_scroll_area = QScrollArea()
         self.unit_scroll_area.setWidgetResizable(True)
         self.unit_container = QWidget()
         self.unit_layout = QVBoxLayout(self.unit_container)
-        self.unit_layout.addStretch() # 保证复选框从上到下排列
+        self.unit_layout.addStretch()
         self.unit_scroll_area.setWidget(self.unit_container)
         self.settings_layout.addWidget(self.unit_scroll_area)
-        self.unit_checkboxes: List[QCheckBox] = [] # 存储复选框的引用
+        self.unit_checkboxes: List[QCheckBox] = []
 
-        # 3. 添加控件 (*** 全面重构 ***)
-
-        # --- 1. 内容 (单词/短语) ---
+        # 内容过滤选项
         self.settings_layout.addWidget(QLabel("3. 选择内容:"))
         self.content_filter_group = QButtonGroup(self)
         self.radio_filter_all = QRadioButton("全部 (单词+短语)")
@@ -200,7 +162,7 @@ class MainWindow(QMainWindow):
         self.settings_layout.addWidget(self.radio_filter_words)
         self.settings_layout.addWidget(self.radio_filter_phrases)
 
-        # --- 2. 顺序 (随机/顺序) ---
+        # 顺序模式选项
         self.settings_layout.addWidget(QLabel("4. 选择顺序:"))
         self.order_mode_group = QButtonGroup(self)
         self.radio_order_seq = QRadioButton("顺序模式")
@@ -211,7 +173,7 @@ class MainWindow(QMainWindow):
         self.settings_layout.addWidget(self.radio_order_seq)
         self.settings_layout.addWidget(self.radio_order_rand)
 
-        # --- 3. 模式 (单词/例句) ---
+        # 问题模式选项
         self.settings_layout.addWidget(QLabel("5. 选择模式:"))
         self.question_mode_group = QButtonGroup(self)
         self.radio_q_word = QRadioButton("单词模式 (中文 -> 英文)")
@@ -222,17 +184,17 @@ class MainWindow(QMainWindow):
         self.settings_layout.addWidget(self.radio_q_word)
         self.settings_layout.addWidget(self.radio_q_example)
 
-        # --- 4. 提示 (首字母) ---
+        # 提示选项
         self.settings_layout.addWidget(QLabel("6. 额外提示:"))
         self.cb_show_first_letter = QCheckBox("显示首字母提示")
         self.settings_layout.addWidget(self.cb_show_first_letter)
 
-        # --- 5. 错误重试 ---
+        # 错误重试选项
         self.settings_layout.addWidget(QLabel("7. 答题选项:"))
         self.cb_retry_on_wrong = QCheckBox("错误重试 (答错后继续显示当前单词)")
         self.settings_layout.addWidget(self.cb_retry_on_wrong)
 
-        # --- 操作按钮 ---
+        # 操作按钮
         self.start_button = QPushButton("开始游戏")
         self.start_button.clicked.connect(self.start_game)
         self.settings_layout.addWidget(self.start_button)
@@ -245,11 +207,8 @@ class MainWindow(QMainWindow):
         self.clear_wrong_button.clicked.connect(self.clear_wrong_words)
         self.settings_layout.addWidget(self.clear_wrong_button)
 
-        # 4. 将设置容器放入 Dock
-        self.settings_layout.addStretch() # 保证所有控件靠上
+        self.settings_layout.addStretch()
         self.settings_dock.setWidget(settings_widget)
-        
-        # 5. 将 Dock 添加到主窗口
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.settings_dock)
 
     # --- UI 填充和更新 ---
@@ -336,13 +295,9 @@ class MainWindow(QMainWindow):
             self.settings_dock.show()
             self.toggle_settings_action.setText("隐藏设置")
 
-    # --- *** 新增代码：帮助对话框 *** ---
     @pyqtSlot()
     def show_help_dialog(self):
-        """
-        (C-V) 显示帮助和关于信息
-        """
-        # 你可以在这里随意编辑你想展示的任何信息
+        """显示帮助和关于信息"""
         help_text = """
 欢迎使用"大英默写器"！
 
@@ -368,10 +323,7 @@ Lucent_Snow
 
 祝你使用愉快！
 """
-
-        # 使用 QMessageBox 来显示一个简单的 "帮助" 对话框
         QMessageBox.information(self, "帮助", help_text)
-    # --- *** 新增结束 *** ---
 
     # --- 游戏逻辑槽函数 (Slots) ---
 
@@ -565,12 +517,12 @@ Lucent_Snow
     @pyqtSlot()
     def submit_answer(self):
         """
-        (C-E) 用户在输入框中按下了回车键。
-        (V3 - 自定义指令分发器)
+        用户在输入框中按下了回车键。
+        自定义指令分发器
         """
         user_input = self.input_line.text().strip()
 
-        # 1. 检查输入是否为自定义指令
+        # 检查输入是否为自定义指令
         if user_input in self.keybindings:
             action_name = self.keybindings[user_input]
             self.handle_action(action_name)
@@ -582,10 +534,10 @@ Lucent_Snow
             self.input_line.clear()
             return
 
-        # 1. (核心) 将答案交给 Engine 判断
+        # 将答案交给 Engine 判断
         is_correct = self.engine.check_answer(user_input)
 
-        # 2. 根据 Engine 返回的结果更新 UI
+        # 根据 Engine 返回的结果更新 UI
         if is_correct:
             # 使用统一的清理方法显示正确答案
             correct_answer = self._get_clean_english(self.current_word)
@@ -603,9 +555,8 @@ Lucent_Snow
 
             # 如果启用了错误重试，不进入下一个问题，而是继续显示当前问题
             if self.engine.retry_on_wrong:
-                # *** 修复：回退索引以重试当前单词 ***
+                # 修复：回退索引以重试当前单词
                 self.engine.current_index -= 1
-                # *** 修复结束 ***
                 self.append_to_log(f"  请重试！", "blue")
                 self.input_line.clear()
                 self.input_line.setFocus()
@@ -615,7 +566,7 @@ Lucent_Snow
 
     def handle_action(self, action_name: str):
         """
-        (V2) 根据 keybindings 执行对应的动作。
+        根据 keybindings 执行对应的动作。
         """
         if not self.input_line.isEnabled() and action_name not in ["action_start_review", "action_clear_cache", "action_clear_screen"]:
             # 游戏未开始时，只允许少数几个动作
