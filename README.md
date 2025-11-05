@@ -87,3 +87,8 @@
 ## 致谢AI
 
 * 感谢 Claude code和Gemini2.5pro,Minimax m2 提供了架构重构支持和代码实现。
+
+
+// TODO 原型锁是否打开
+// TODO mac程序打包
+// TODO 再试一次功能
