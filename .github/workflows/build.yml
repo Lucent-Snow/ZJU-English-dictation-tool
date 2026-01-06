@@ -1,0 +1,63 @@
+name: Build macOS App
+
+on:
+  push:
+    # 只在 master 分支被推送时触发
+    branches: [ master ]
+  # 允许你手动在 GitHub 界面上触发
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    # 使用 GitHub 提供的最新 macOS 虚拟机
+    runs-on: macos-latest
+
+    steps:
+    # 1. 把你的代码下载到虚拟机上
+    - uses: actions/checkout@v4
+
+    # 2. 设置 Python 3.11
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    # 3. 安装你的依赖 (PyQt6 和 Nuitka)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyQt6 Nuitka
+
+    # 4. 运行 Nuitka 编译！
+    #    注意：这是 macOS 版本的命令
+    - name: Run Nuitka Build
+      run: |
+        nuitka --standalone \
+               --plugin-enable=pyqt6 \
+               --macos-disable-console \
+               --macos-create-app-bundle \
+               main.py
+
+    # 5. (关键) 将编译好的 .app 文件夹和你的数据文件
+    #    打包成一个 .zip 文件
+    - name: Create Release Zip
+      run: |
+        # 1. Nuitka 会在 main.dist 文件夹里创建 .app
+        mkdir -p Release
+        cp -R main.dist/main.app Release/大英默写器.app
+
+        # 2. 复制你的数据文件，保持结构
+        cp -R data Release/data
+        cp keybindings.json Release/keybindings.json
+
+        # 3. 压缩
+        cd Release
+        zip -r ../macOS_Release.zip .
+        cd ..
+
+    # 6. 将 .zip 文件上传为"产物" (Artifact)
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macOS-App-Release
+        path: macOS_Release.zip

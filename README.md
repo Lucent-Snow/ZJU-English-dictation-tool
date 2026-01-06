@@ -69,7 +69,7 @@
 
 1.  **安装依赖**:
     ```bash
-    pip install PyQt6 Nuitka
+    pip install -r requirements.txt
     ```
 
 2.  **执行编译**:

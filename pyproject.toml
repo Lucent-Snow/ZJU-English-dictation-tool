@@ -1,0 +1,11 @@
+[project]
+name = "english-dictation-tool"
+version = "0.1.0"
+description = "一个单词默写软件"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "nuitka>=2.8.4",
+    "pyqt6>=6.10.0",
+    "zstandard>=0.25.0",
+]

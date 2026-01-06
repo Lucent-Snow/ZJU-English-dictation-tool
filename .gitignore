@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+
+# Nuitka 编译产物
+main.build/
+main.dist/
+main.onefile-build/
+*.exe
+
+# 用户数据
+wrong_words.json
+
+# 临时/测试文件
+test.md
+other/
+
+# 开发工具相关的 CSV 处理脚本
+check_csv_columns.py
+compare_csv_rows.py

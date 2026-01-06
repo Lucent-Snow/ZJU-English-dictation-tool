@@ -1,0 +1,7 @@
+{
+    "a": "action_skip_no_penalty",
+    "/skip": "action_skip_no_penalty",
+    "/clc": "action_clear_cache",
+    "/clear": "action_clear_screen",
+    "/review": "action_start_review"
+}
