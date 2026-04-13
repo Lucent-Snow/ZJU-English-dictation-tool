@@ -486,13 +486,13 @@ Lucent_Snow
             # 执行替换
             blanked_sentence = re.sub(r'\[\[.*?\]\]', replace_with_hint, sentence)
 
-            self.append_to_log(f"\n({progress[0]}/{progress[1]}) 例句填空:", "black")
-            self.append_to_log(f"  {blanked_sentence}", "black")
+            self.append_to_log(f"\n({progress[0]}/{progress[1]}) 例句填空:", "white")
+            self.append_to_log(f"  {blanked_sentence}", "white")
             base_hint_is_example = True
 
         if not base_hint_is_example:
             # 单词模式
-            self.append_to_log(f"\n({progress[0]}/{progress[1]}) 请输入:", "black")
+            self.append_to_log(f"\n({progress[0]}/{progress[1]}) 请输入:", "white")
 
         # 准备最终提示字符串
         final_hint_string = f"{clean_hint}"
@@ -508,8 +508,7 @@ Lucent_Snow
             pass
         else:
             # 单词模式下，中文和首字母是主要提示
-            self.append_to_log(f"  {final_hint_string}", "black")
-
+            self.append_to_log(f"  {final_hint_string}", "white")
         # 清理和聚焦
         self.input_line.clear()
         self.input_line.setFocus()
