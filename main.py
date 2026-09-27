@@ -18,6 +18,7 @@ from PyQt6.QtCore import Qt, pyqtSlot
 # 导入我们自己的 "大脑" 和 "工人"
 from model import DataLoader, WordEntry
 from engine import GameEngine
+import app_paths
 
 class MainWindow(QMainWindow):
     """
@@ -29,7 +30,7 @@ class MainWindow(QMainWindow):
 
         # 初始化数据加载器和游戏引擎
         try:
-            self.loader = DataLoader(data_directory="./data")
+            self.loader = DataLoader(data_directory=app_paths.data_directory())
         except Exception as e:
             QMessageBox.critical(self, "错误", f"数据加载器初始化失败: {e}\n请确保 'data' 目录存在。")
             sys.exit(1)
@@ -94,8 +95,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def load_keybindings(self) -> dict:
-        """加载 keybindings.json。如果不存在则创建默认值。"""
-        bindings_file = "keybindings.json"
+        """加载 keybindings.json。优先读用户目录，不存在则用内置默认值生成一份。"""
+        bindings_file = app_paths.user_keybindings_file()
         default_bindings = {
             "a": "action_skip_no_penalty",
             "/skip": "action_skip_no_penalty",
@@ -105,13 +106,22 @@ class MainWindow(QMainWindow):
         }
 
         if not os.path.exists(bindings_file):
+            # 优先使用随程序分发的默认配置，取不到才退回内置字典
+            defaults = default_bindings
+            bundled = app_paths.bundled_keybindings_file()
+            if os.path.exists(bundled):
+                try:
+                    with open(bundled, 'r', encoding='utf-8') as f:
+                        defaults = json.load(f)
+                except Exception as e:
+                    print(f"读取内置 keybindings.json 失败: {e}")
             try:
                 with open(bindings_file, 'w', encoding='utf-8') as f:
-                    json.dump(default_bindings, f, indent=4)
-                return default_bindings
+                    json.dump(defaults, f, indent=4, ensure_ascii=False)
+                return defaults
             except Exception as e:
                 print(f"无法创建默认 keybindings.json: {e}")
-                return {}
+                return defaults
 
         try:
             with open(bindings_file, 'r', encoding='utf-8') as f:

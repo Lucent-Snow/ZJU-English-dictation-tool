@@ -6,9 +6,10 @@ from typing import List, Optional, Set
 
 # 从我们的 model.py 文件中导入数据类
 from model import DataLoader, WordEntry
+from app_paths import wrong_words_file
 
-# 定义错题本在硬盘上的存储位置
-WRONG_WORDS_FILE = "wrong_words.json"
+# 定义错题本在硬盘上的存储位置（用户目录，可写；打包成 .app 后工作目录是 "/"，不能写相对路径）
+WRONG_WORDS_FILE = wrong_words_file()
 
 class GameEngine:
     """
