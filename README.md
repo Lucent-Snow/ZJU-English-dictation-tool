@@ -45,6 +45,29 @@
 
 双击 `main.exe` 即可启动程序。
 
+### macOS
+
+从 Release 页面下载 `macOS-App-Release.zip`，解压后把 `大英默写器.app` 拖进「应用程序」文件夹，然后双击运行。
+
+首次打开可能被 Gatekeeper 拦下（提示「无法验证开发者」），任选一种方式放行：
+
+* 在 Finder 里**右键点击 App → 打开 → 再次点「打开」**；
+* 或执行 `xattr -dr com.apple.quarantine "/Applications/大英默写器.app"` 后再双击。
+
+> 彻底免除这个提示需要 Apple 开发者签名并公证，本项目暂未提供。
+
+### 用户数据放在哪里
+
+程序安装目录是只读的（macOS 上尤其如此），所以错题本和自定义快捷键不再写在程序旁边，而是放在系统的用户数据目录：
+
+* macOS: `~/Library/Application Support/大英默写器/`
+* Windows: `%APPDATA%\大英默写器\`
+* Linux: `~/.local/share/大英默写器/`
+
+目录里会有两个文件：`wrong_words.json`（错题本）和 `keybindings.json`（自定义快捷键，首次运行从程序内置的默认配置生成）。删掉这个目录等于把设置和错题本全部重置。
+
+旧版本把这两个文件放在程序目录里，程序启动时会自动把它们迁移过去。
+
 ## 自定义 (高级用户)
 
 你可以直接编辑以下文件来自定义你的体验，无需重新编译：
@@ -55,6 +78,7 @@
     * **例句填空**: 运行 AI 脚本（或手动）将 `examples` 列的目标词用 `[[...]]` 包裹。
 
 2.  **快捷键 (`keybindings.json` 文件)**:
+    * 注意区分两份：仓库里的是**内置默认配置**，实际生效并可编辑的那份在用户数据目录（见上文「用户数据放在哪里」）。
     * 这是一个 JSON 映射表，"键" 是你输入的指令，"值" 是程序执行的动作。
     * 你可以随意修改"键" (例如，把 `/review` 改成 `r`)。
     * **可用动作列表**:
@@ -84,11 +108,32 @@
 3.  **打包发布**:
     将新生成的 `main.exe` 与 `data/` 文件夹、`keybindings.json` 文件一起打包。
 
+### macOS 打包 (.app)
+
+macOS 上改用 PyInstaller 生成 `.app`，一条命令完成构建 / 签名 / 安装：
+
+```bash
+bash build_macos.sh                 # 装到 ~/Applications
+bash build_macos.sh /Applications   # 或指定安装目录
+```
+
+* 需要 Python 3.9+。脚本会自动寻找 `python3.13` / `python3.12` / `python3.11` / `python3`，
+  也可以用 `PYTHON_BIN=/path/to/python3 bash build_macos.sh` 指定。
+* 脚本在临时目录里建独立虚拟环境安装 PyQt6 与 PyInstaller，不污染当前环境。
+* 重新分发时**必须用 `ditto` 压缩，不要用 `zip -r`**：
+
+  ```bash
+  ditto -c -k --sequesterRsrc --keepParent "大英默写器.app" macOS_Release.zip
+  ```
+
+  `.app` 里的 Qt framework 依赖 `Versions/Current` 这类符号链接，`zip` 会把它们展开成实体文件，
+  既让体积翻倍，也会让 bundle 的签名失效，用户双击就会闪退。
+* 仓库里的 GitHub Actions 工作流（`.github/workflows/build.yml`）用的是同一套参数。
+
 ## 致谢AI
 
 * 感谢 Claude code和Gemini2.5pro,Minimax m2 提供了架构重构支持和代码实现。
 
 
 // TODO 原型锁是否打开
-// TODO mac程序打包
 // TODO 再试一次功能
