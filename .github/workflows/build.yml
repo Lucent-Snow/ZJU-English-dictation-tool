@@ -3,6 +3,7 @@ name: Build macOS App
 on:
   push:
     branches: [ master ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -24,16 +25,22 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --windowed \
+        pyinstaller --noconfirm --clean --windowed \
                     --name "大英默写器" \
+                    --osx-bundle-identifier "com.github.Lucent-Snow.ZJU-English-dictation-tool" \
                     --add-data "data:data" \
                     --add-data "keybindings.json:." \
                     main.py
 
+    - name: Verify code signature
+      run: |
+        codesign --verify --deep --strict "dist/大英默写器.app"
+
     - name: Create Release Zip
       run: |
-        cd dist
-        zip -r ../macOS_Release.zip 大英默写器.app
+        # 必须用 ditto：`zip -r` 会把 .app 里 Qt framework 的符号链接展开成实体文件，
+        # 既让体积翻倍，也会破坏 bundle 的签名，用户双击就会闪退。
+        ditto -c -k --sequesterRsrc --keepParent "dist/大英默写器.app" macOS_Release.zip
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

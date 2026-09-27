@@ -10,6 +10,11 @@ main.dist/
 main.onefile-build/
 *.exe
 
+# PyInstaller 产物
+build/
+dist/
+*.spec
+
 # 用户数据
 wrong_words.json
 

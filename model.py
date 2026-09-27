@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass
 from typing import List
 
+from app_paths import data_directory as _default_data_directory
+
 def _sanitize_string(text: str) -> str:
     """清理字符串，移除标准空白符和常见的不可见字符。"""
     if not text:
@@ -29,11 +31,12 @@ class DataLoader:
     """
     负责从文件中读取和解析单词数据。
     """
-    def __init__(self, data_directory: str = "./data"):
+    def __init__(self, data_directory: str = None):
         """
         初始化加载器，指定数据存放的根目录。
+        默认使用随程序分发的 data/ 目录（打包成 .app 后也能正确定位）。
         """
-        self.data_directory = data_directory
+        self.data_directory = data_directory or _default_data_directory()
 
     def get_available_books(self) -> List[str]:
         """
